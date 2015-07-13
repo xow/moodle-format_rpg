@@ -15,11 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Topics course format.  Display the whole course as "topics" made of modules.
+ * RPG course format. Turns your course into a Role Playing Game
  *
- * @package format_topics
- * @copyright 2006 The Open University
- * @author N.D.Freear@open.ac.uk, and others.
+ * @package format_rpg
+ * @copyright 2015 John Okely
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -48,7 +47,7 @@ if (($marker >=0) && has_capability('moodle/course:setcurrentsection', $context)
 $course = course_get_format($course)->get_course();
 course_create_sections_if_missing($course, range(0, $course->numsections));
 
-$renderer = $PAGE->get_renderer('format_topics');
+$renderer = $PAGE->get_renderer('format_rpg');
 
 if (!empty($displaysection)) {
     $renderer->print_single_section_page($course, null, null, null, null, $displaysection);
@@ -57,4 +56,4 @@ if (!empty($displaysection)) {
 }
 
 // Include course format js module
-$PAGE->requires->js('/course/format/topics/format.js');
+$PAGE->requires->js('/course/format/rpg/format.js');

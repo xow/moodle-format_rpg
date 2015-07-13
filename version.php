@@ -18,13 +18,13 @@
  * Version details
  *
  * @package    format
- * @subpackage topics
- * @copyright  1999 onwards Martin Dougiamas (http://dougiamas.com)
+ * @subpackage rpg
+ * @copyright  2015 John Okely
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2015051100;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2015050500;        // Requires this Moodle version.
-$plugin->component = 'format_topics';    // Full name of the plugin (used for diagnostics).
+$plugin->version   = 2015071300;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->requires  = 2014111000;        // Requires this Moodle version.
+$plugin->component = 'format_rpg';    // Full name of the plugin (used for diagnostics).
