@@ -120,11 +120,14 @@ class format_rpg_renderer extends format_section_renderer_base {
     public function print_multiple_section_page($course, $sections, $mods, $modnames, $modnamesused) {
         global $PAGE;
         if ($PAGE->user_is_editing()) {
-            return parent::print_multiple_section_page($course, $sections, $mods, $modnames, $modnamesused);
+            parent::print_multiple_section_page($course, $sections, $mods, $modnames, $modnamesused);
         } else {
-            return $this->render_game();
+            $this->render_game();
         }
     }
     protected function render_game() {
+        echo <<<EOT
+            Hello world
+EOT;
     }
 }
