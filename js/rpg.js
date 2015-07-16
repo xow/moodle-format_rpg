@@ -20,7 +20,8 @@ var maps = {
                 x: 18,
                 y: 18
             }
-        ]
+        ],
+        layer: 'world1layer1'
     },
     1: {
         id: 1,
@@ -31,7 +32,8 @@ var maps = {
                 x: 200,
                 y: 200
             }
-        ]
+        ],
+        layer: 'world2layer1'
     },
     2: {
         id: 2,
@@ -42,7 +44,8 @@ var maps = {
                 x: 400,
                 y: 400
             }
-        ]
+        ],
+        layer: 'world3layer1'
     }
 };
 
@@ -66,7 +69,7 @@ function preload() {
     game.load.spritesheet('warp', 'format/rpg/assets/diamond.png', 32, 28);
     game.load.spritesheet('dog', 'format/rpg/assets/baddie.png', 32, 32);
     game.load.tilemap('map1', 'format/rpg/assets/tilemaps/maps/map1.json', null, Phaser.Tilemap.TILED_JSON);
-    game.load.image('tiles', 'format/rpg/assets/terrain_atlas.png');
+    game.load.image('terrain_atlas_image', 'format/rpg/assets/terrain_atlas.png');
 }
 
 function create() {
@@ -74,10 +77,7 @@ function create() {
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
     tilemap = game.add.tilemap('map1');
-    tilemap.addTilesetImage('world1', 'tiles');
-    layer = tilemap.createLayer('World1');
-    layer.resizeWorld();
-    tilemap.setCollisionByExclusion([183]);
+    tilemap.addTilesetImage('terrain_atlas', 'terrain_atlas_image');
 
     warps = game.add.group();
     warps.enableBody = true;
@@ -86,7 +86,7 @@ function create() {
         warp.kill();
     }
 
-    sprite = game.add.sprite(32, game.world.height - 150, 'dude');
+    sprite = game.add.sprite(128, 128, 'dude');
     game.physics.arcade.enable(sprite);
     sprite.anchor.set(0.5, 0.5);
     sprite.body.collideWorldBounds = true;
@@ -100,6 +100,12 @@ function create() {
 function update() {
     var i;
     if (currentMap != map) {
+        game.world.remove(layer);
+        layer = tilemap.createLayer(map.layer);
+        layer.resizeWorld();
+        game.world.sendToBack(layer);
+        tilemap.setCollisionByExclusion([183, 181], true, layer);
+
         // TODO Destroy all the elements from the previous map, memory leaks!!
         for (i = 0; i < npcs.length; i++) {
             npcs[i].destroy();
@@ -107,7 +113,12 @@ function update() {
         }
 
         // New map transition
-        game.stage.backgroundColor = map.bg;
+        //console.log(tilemap.layers);
+        if (tilemap.layers.length > 0) {
+            //tilemap.layers[tilemap.currentLayer].destroy();
+            //layer = tilemap.createLayer('world2layer1');;
+            //layer = tilemap.createLayer('world2layer1');
+        }
 
         for (i = 0; i < 4; i++) {
             var warp = warps.getAt(i),

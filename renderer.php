@@ -127,9 +127,9 @@ class format_rpg_renderer extends format_section_renderer_base {
     }
     protected function render_game() {
         echo <<<EOT
+<div id="container"></div>
 <script type="text/javascript" src="format/rpg/js/phaser.min.js"></script>
 <script type="text/javascript" src="format/rpg/js/rpg.js"></script>
-<div id="container"></div>
 EOT;
     }
 }
