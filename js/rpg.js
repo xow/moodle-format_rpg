@@ -64,17 +64,19 @@ function preload() {
     game.load.spritesheet('dude', 'format/rpg/assets/dude.png', 32, 48);
     game.load.spritesheet('warp', 'format/rpg/assets/diamond.png', 32, 28);
     game.load.spritesheet('dog', 'format/rpg/assets/baddie.png', 32, 32);
-    game.load.image('tiles', 'format/rpg/assets/tiles.png');
+    game.load.tilemap('map1', 'format/rpg/assets/tilemaps/maps/map1.json', null, Phaser.Tilemap.TILED_JSON);
+    game.load.image('tiles', 'format/rpg/assets/terrain_atlas.png');
 }
 
 function create() {
     var sprite;
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
-    tilemap = game.add.tilemap();
-    tilemap.addTilesetImage('tiles', 'tiles', 32, 32);
-    layer = tilemap.create(null, TILESX, TILESY, TILESW, TILESH);
-    tilemap.fill(5, 0, 0, TILESX, TILESY, layer);
+    tilemap = game.add.tilemap('map1');
+    tilemap.addTilesetImage('world1', 'tiles');
+    layer = tilemap.createLayer('World1');
+    layer.resizeWorld();
+    tilemap.setCollisionByExclusion([183]);
 
     warps = game.add.group();
     warps.enableBody = true;
@@ -219,8 +221,11 @@ Character.prototype.update = function() {
             this.x = this.destination.x;
             this.y = this.destination.y;
             this.stop();
+        } else {
+            this.angle = game.physics.arcade.moveToXY(this.sprite, this.destination.x * TILESW, this.destination.y * TILESH, 200);
         }
     }
+    game.physics.arcade.collide(this.sprite, layer);
 };
 
 function Player() {
