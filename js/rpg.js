@@ -1,143 +1,176 @@
-var game = new Phaser.Game(800, 600, Phaser.AUTO, 'container', { preload: preload, create: create, update: update });
+var TILESX = 20,
+    TILESY = 20,
+    TILESW = 32,
+    TILESH = 32;
+
+var maps = {
+    0: {
+        id: 0,
+        bg: '#454645',
+        warps: [
+            {
+                to: 1,
+                x: 10,
+                y: 10
+            }
+        ]
+    },
+    1: {
+        id: 1,
+        bg: '#ff9900',
+        warps: [
+            {
+                to: 2,
+                x: 200,
+                y: 200
+            }
+        ]
+    },
+    2: {
+        id: 2,
+        bg: '#ffff00',
+        warps: [
+            {
+                to: 0,
+                x: 400,
+                y: 400
+            }
+        ]
+    }
+};
+
+var game = new Phaser.Game(TILESX * TILESW, TILESY * TILESH, Phaser.AUTO, 'container', {
+    preload: preload,
+    create: create,
+    update: update
+});
+
+var player,
+    map = maps[0],
+    currentMap,
+    tilemap,
+    layer,
+    warps;
 
 function preload() {
-
-    game.load.image('sky', 'format/rpg/assets/sky.png');
-    game.load.image('ground', 'format/rpg/assets/platform.png');
-    game.load.image('star', 'format/rpg/assets/star.png');
     game.load.spritesheet('dude', 'format/rpg/assets/dude.png', 32, 48);
-
+    game.load.spritesheet('warp', 'format/rpg/assets/diamond.png', 32, 28);
+    game.load.image('tiles', 'format/rpg/assets/tiles.png');
 }
 
-var player;
-var platforms;
-var cursors;
-
-var stars;
-var score = 0;
-var scoreText;
-
 function create() {
-
-    //  We're going to be using physics, so enable the Arcade Physics system
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
-    //  A simple background for our game
-    game.add.sprite(0, 0, 'sky');
+    tilemap = game.add.tilemap();
+    tilemap.addTilesetImage('tiles', 'tiles', 32, 32);
+    layer = tilemap.create(null, TILESX, TILESY, TILESW, TILESH);
+    tilemap.fill(5, 0, 0, TILESX, TILESY, layer);
 
-    //  The platforms group contains the ground and the 2 ledges we can jump on
-    platforms = game.add.group();
-
-    //  We will enable physics for any object that is created in this group
-    platforms.enableBody = true;
-
-    // Here we create the ground.
-    var ground = platforms.create(0, game.world.height - 64, 'ground');
-
-    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-    ground.scale.setTo(2, 2);
-
-    //  This stops it from falling away when you jump on it
-    ground.body.immovable = true;
-
-    //  Now let's create two ledges
-    var ledge = platforms.create(400, 400, 'ground');
-    ledge.body.immovable = true;
-
-    ledge = platforms.create(-150, 250, 'ground');
-    ledge.body.immovable = true;
-
-    // The player and its settings
-    player = game.add.sprite(32, game.world.height - 150, 'dude');
-
-    //  We need to enable physics on the player
-    game.physics.arcade.enable(player);
-
-    //  Player physics properties. Give the little guy a slight bounce.
-    player.body.bounce.y = 0.2;
-    player.body.gravity.y = 300;
-    player.body.collideWorldBounds = true;
-
-    //  Our two animations, walking left and right.
-    player.animations.add('left', [0, 1, 2, 3], 10, true);
-    player.animations.add('right', [5, 6, 7, 8], 10, true);
-
-    //  Finally some stars to collect
-    stars = game.add.group();
-
-    //  We will enable physics for any star that is created in this group
-    stars.enableBody = true;
-
-    //  Here we'll create 12 of them evenly spaced apart
-    for (var i = 0; i < 12; i++)
-    {
-        //  Create a star inside of the 'stars' group
-        var star = stars.create(i * 70, 0, 'star');
-
-        //  Let gravity do its thing
-        star.body.gravity.y = 300;
-
-        //  This just gives each star a slightly random bounce value
-        star.body.bounce.y = 0.7 + Math.random() * 0.2;
+    warps = game.add.group();
+    warps.enableBody = true;
+    for (var i = 0; i < 4; i++) {
+        var warp = warps.create(0, 0, 'warp');
+        warp.kill();
     }
 
-    //  The score
-    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
-
-    //  Our controls.
-    cursors = game.input.keyboard.createCursorKeys();
-    
+    player = new Player();
 }
 
 function update() {
+    if (currentMap != map) {
+        // New map transition
+        game.stage.backgroundColor = map.bg;
 
-    //  Collide the player and the stars with the platforms
-    game.physics.arcade.collide(player, platforms);
-    game.physics.arcade.collide(stars, platforms);
+        for (i = 0; i < 4; i++) {
+            var warp = warps.getAt(i),
+                infos = map.warps[i];
 
-    //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
-    game.physics.arcade.overlap(player, stars, collectStar, null, this);
+            if (infos) {
+                warp.x = infos.x;
+                warp.y = infos.y;
+                // TODO Store the information somewhere else than in the sprite.
+                warp.to = infos.to;
+                warp.revive();
+            } else {
+                warp.kill();
+            }
+        }
 
-    //  Reset the players velocity (movement)
-    player.body.velocity.x = 0;
-
-    if (cursors.left.isDown)
-    {
-        //  Move to the left
-        player.body.velocity.x = -150;
-
-        player.animations.play('left');
-    }
-    else if (cursors.right.isDown)
-    {
-        //  Move to the right
-        player.body.velocity.x = 150;
-
-        player.animations.play('right');
-    }
-    else
-    {
-        //  Stand still
-        player.animations.stop();
-
-        player.frame = 4;
-    }
-    
-    //  Allow the player to jump if they are touching the ground.
-    if (cursors.up.isDown && player.body.touching.down)
-    {
-        player.body.velocity.y = -350;
+        currentMap = map;
+        return;
     }
 
+    if (game.input.activePointer.isDown) {
+        // TODO Not store destination here.
+        player.moveToXY(layer.getTileX(game.input.activePointer.x), layer.getTileX(game.input.activePointer.y));
+
+        // game.physics.arcade.moveToXY(player, player.dest[0], player.dest[1], 200);
+        // console.log(tilemap);
+        // console.log(tilemap.getTileWorldXY(this.game.input.activePointer.x, this.game.input.activePointer.y));
+        // player.x = this.game.input.activePointer.x - Math.floor(player.width / 2);
+        // player.y = this.game.input.activePointer.y - Math.floor(player.height / 2);
+    }
+
+    game.physics.arcade.overlap(player.sprite, warps, warpOverlap, null, this);
+    player.update();
 }
 
-function collectStar (player, star) {
-    
-    // Removes the star from the screen
-    star.kill();
-
-    //  Add and update the score
-    score += 10;
-    scoreText.text = 'Score: ' + score;
-
+function warpOverlap(player, warp) {
+    map = maps[warp.to];
 }
+
+function Player() {
+    var sprite = game.add.sprite(32, game.world.height - 150, 'dude');
+    game.physics.arcade.enable(sprite);
+    sprite.body.collideWorldBounds = true;
+    sprite.animations.add('left', [0, 1, 2, 3], 10, true);
+    sprite.animations.add('right', [5, 6, 7, 8], 10, true);
+    sprite.frame = 4;
+
+    this.sprite = sprite;
+    this.origin = {x: sprite.x, y: sprite.y};
+    this.destination = {x: sprite.x, y: sprite.y};
+    this.angle = 0;
+}
+Player.prototype.moveToXY = function(tileX, tileY) {
+    var x = tileX * TILESW,
+        y = tileY * TILESH;
+
+    this.origin = {x: this.sprite.x, y: this.sprite.y};
+    this.destination = {x: x, y: y};
+    this.angle = game.physics.arcade.moveToXY(this.sprite, x, y, 200);
+};
+Player.prototype.update = function() {
+    if (this.sprite.body.speed > 0) {
+        var stopCondition,
+            x = this.sprite.x,
+            y = this.sprite.y;
+
+        if (this.angle >= 0 && this.angle < Math.PI/2) {
+            // Going bottom right.
+            stopCondition = x >= this.destination.x && y >= this.destination.y;
+            this.sprite.animations.play('right');
+        } else if (this.angle >= Math.PI/2) {
+            // Going bottom left.
+            stopCondition = x <= this.destination.x && y >= this.destination.y;
+            this.sprite.animations.play('left');
+        } else if (this.angle >= -Math.PI && this.angle < -Math.PI/2) {
+            // Going top left.
+            stopCondition = x <= this.destination.x && y <= this.destination.y;
+            this.sprite.animations.play('left');
+        } else {
+            // Going top right.
+            stopCondition = x >= this.destination.x && y <= this.destination.y;
+            this.sprite.animations.play('right');
+        }
+
+        if (stopCondition) {
+            this.sprite.x = this.destination.x;
+            this.sprite.y = this.destination.y;
+            this.sprite.body.velocity.setTo(0, 0);
+
+            this.sprite.animations.stop();
+            this.sprite.frame = 4;
+        }
+    }
+};
