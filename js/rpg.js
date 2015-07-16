@@ -13,6 +13,13 @@ var maps = {
                 x: 10,
                 y: 10
             }
+        ],
+        npcs: [
+            {
+                type: 'dog',
+                x: 18,
+                y: 18
+            }
         ]
     },
     1: {
@@ -50,15 +57,18 @@ var player,
     currentMap,
     tilemap,
     layer,
-    warps;
+    warps,
+    npcs = [];
 
 function preload() {
     game.load.spritesheet('dude', 'format/rpg/assets/dude.png', 32, 48);
     game.load.spritesheet('warp', 'format/rpg/assets/diamond.png', 32, 28);
+    game.load.spritesheet('dog', 'format/rpg/assets/baddie.png', 32, 32);
     game.load.image('tiles', 'format/rpg/assets/tiles.png');
 }
 
 function create() {
+    var sprite;
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
     tilemap = game.add.tilemap();
@@ -73,11 +83,24 @@ function create() {
         warp.kill();
     }
 
-    player = new Player();
+    sprite = game.add.sprite(32, game.world.height - 150, 'dude');
+    game.physics.arcade.enable(sprite);
+    sprite.body.collideWorldBounds = true;
+    sprite.animations.add('left', [0, 1, 2, 3], 10, true);
+    sprite.animations.add('right', [5, 6, 7, 8], 10, true);
+    sprite.frame = 4;
+    player = new Player(sprite);
 }
 
 function update() {
+    var i;
     if (currentMap != map) {
+        // TODO Destroy all the elements from the previous map, memory leaks!!
+        for (i = 0; i < npcs.length; i++) {
+            npcs[i].destroy();
+            delete npcs[i];
+        }
+
         // New map transition
         game.stage.backgroundColor = map.bg;
 
@@ -93,6 +116,13 @@ function update() {
                 warp.revive();
             } else {
                 warp.kill();
+            }
+        }
+
+        npcs = [];
+        if (map.npcs) {
+            for (i = 0; i < map.npcs.length; i++) {
+                npcs.push(new NPC(map.npcs[i]));
             }
         }
 
@@ -113,64 +143,126 @@ function update() {
 
     game.physics.arcade.overlap(player.sprite, warps, warpOverlap, null, this);
     player.update();
+    for (i = 0; i < npcs.length; i++) {
+        npcs[i].update();
+    }
 }
 
 function warpOverlap(player, warp) {
     map = maps[warp.to];
 }
 
-function Player() {
-    var sprite = game.add.sprite(32, game.world.height - 150, 'dude');
-    game.physics.arcade.enable(sprite);
-    sprite.body.collideWorldBounds = true;
-    sprite.animations.add('left', [0, 1, 2, 3], 10, true);
-    sprite.animations.add('right', [5, 6, 7, 8], 10, true);
-    sprite.frame = 4;
-
+function Character(sprite) {
     this.sprite = sprite;
-    this.origin = {x: sprite.x, y: sprite.y};
-    this.destination = {x: sprite.x, y: sprite.y};
+    this.x = 0;
+    this.y = 0;
+    this.origin = {x: this.x, y: this.y};
+    this.destination = {x: this.x, y: this.y};
     this.angle = 0;
 }
-Player.prototype.moveToXY = function(tileX, tileY) {
-    var x = tileX * TILESW,
-        y = tileY * TILESH;
-
-    this.origin = {x: this.sprite.x, y: this.sprite.y};
-    this.destination = {x: x, y: y};
-    this.angle = game.physics.arcade.moveToXY(this.sprite, x, y, 200);
+Character.prototype.destroy = function() {
+    this.sprite.destroy();
 };
-Player.prototype.update = function() {
+Character.prototype.isMoving = function() {
+    return !Phaser.Point.equals(this.sprite.body.velocity, new Phaser.Point(0,0));
+};
+Character.prototype.jumpToXY = function(x, y) {
+    this.origin = {x: this.x, y: this.y};
+    this.destination = {x: x, y: y};
+    this.angle = 0;
+    this.x = x;
+    this.y = y;
+    this.sprite.x = x * TILESW;
+    this.sprite.y = y * TILESH;
+};
+Character.prototype.moveToXY = function(x, y) {
+    this.origin = {x: this.x, y: this.y};
+    this.destination = {x: x, y: y};
+    this.angle = game.physics.arcade.moveToXY(this.sprite, x * TILESW, y * TILESH, 200);
+};
+Character.prototype.stop = function() {
+    this.sprite.x = this.x * TILESW;
+    this.sprite.y = this.y * TILESH;
+    this.sprite.body.velocity.setTo(0, 0);
+    this.sprite.animations.stop();
+};
+Character.prototype.update = function() {
     if (this.sprite.body.speed > 0) {
         var stopCondition,
             x = this.sprite.x,
-            y = this.sprite.y;
+            y = this.sprite.y,
+            destX = this.destination.x * TILESW,
+            destY = this.destination.y * TILESH;
+
+        this.x = Math.round(x / TILESW);
+        this.y = Math.round(y / TILESH);
 
         if (this.angle >= 0 && this.angle < Math.PI/2) {
             // Going bottom right.
-            stopCondition = x >= this.destination.x && y >= this.destination.y;
+            stopCondition = x >= destX && y >= destY;
             this.sprite.animations.play('right');
         } else if (this.angle >= Math.PI/2) {
             // Going bottom left.
-            stopCondition = x <= this.destination.x && y >= this.destination.y;
+            stopCondition = x <= destX && y >= destY;
             this.sprite.animations.play('left');
         } else if (this.angle >= -Math.PI && this.angle < -Math.PI/2) {
             // Going top left.
-            stopCondition = x <= this.destination.x && y <= this.destination.y;
+            stopCondition = x <= destX && y <= destY;
             this.sprite.animations.play('left');
         } else {
             // Going top right.
-            stopCondition = x >= this.destination.x && y <= this.destination.y;
+            stopCondition = x >= destX && y <= destY;
             this.sprite.animations.play('right');
         }
 
         if (stopCondition) {
-            this.sprite.x = this.destination.x;
-            this.sprite.y = this.destination.y;
-            this.sprite.body.velocity.setTo(0, 0);
-
-            this.sprite.animations.stop();
-            this.sprite.frame = 4;
+            this.x = this.destination.x;
+            this.y = this.destination.y;
+            this.stop();
         }
     }
+};
+
+function Player() {
+    Character.apply(this, arguments);
+}
+Player.prototype = Object.create(Character.prototype);
+Player.prototype.constructor = Player;
+Player.prototype.stop = function() {
+    Character.prototype.stop.apply(this, arguments);
+    this.sprite.frame = 4;
+};
+
+function NPC(infos) {
+    // TODO Handle different types of NPCs somehow, probably somewhere else.
+    var sprite = game.add.sprite(0, 0, infos.type);
+    Character.apply(this, [sprite]);
+
+    sprite.kill();
+    game.physics.arcade.enable(sprite);
+    sprite.body.collideWorldBounds = true;
+    sprite.animations.add('left', [0, 1], 10, true);
+    sprite.animations.add('right', [2, 3], 10, true);
+    sprite.frame = 1;
+
+    this.infos = infos;
+    this.jumpToXY(infos.x, infos.y);
+    sprite.revive();
+}
+NPC.prototype = Object.create(Character.prototype);
+NPC.prototype.constructor = NPC;
+NPC.prototype.stop = function() {
+    Character.prototype.stop.apply(this, arguments);
+    this.sprite.frame = 1;
+};
+NPC.prototype.update = function() {
+    Character.prototype.update.apply(this, arguments);
+    // Disabling this feature for now.
+    // if (!this.isMoving()) {
+    //     if (this.x == 1) {
+    //         this.moveToXY(this.infos.x, this.infos.y);
+    //     } else {
+    //         this.moveToXY(1, this.infos.y);
+    //     }
+    // }
 };
