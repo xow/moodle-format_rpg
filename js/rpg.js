@@ -95,6 +95,11 @@ function create() {
     sprite.frame = 4;
     player = new Player(sprite);
     game.camera.follow(player.sprite);
+
+    game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+    game.scale.pageAlignHorizontally = true;
+    game.scale.pageAlignVertically = true;
+    game.scale.setScreenSize(true);
 }
 
 function update() {
