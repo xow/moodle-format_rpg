@@ -137,16 +137,18 @@ function update() {
 
     if (game.input.activePointer.isDown) {
         // TODO Not store destination here.
-        var clear = true;
+        var clear = true,
+            x = game.input.activePointer.worldX,
+            y = game.input.activePointer.worldY;
         for (i = 0; i < npcs.length; i++) {
-            if (npcs[0].sprite.body.hitTest(game.input.activePointer.x, game.input.activePointer.y)) {
+            if (npcs[0].sprite.body.hitTest(x, y)) {
                 clear = false;
                 break;
             }
         }
 
         if (clear) {
-            player.moveToXY(layer.getTileX(game.input.activePointer.x+game.camera.x), layer.getTileX(game.input.activePointer.y+game.camera.y));
+            player.moveToXY(layer.getTileX(x), layer.getTileX(y));
         }
 
         // game.physics.arcade.moveToXY(player, player.dest[0], player.dest[1], 200);
