@@ -135,7 +135,7 @@ function update() {
 
     if (game.input.activePointer.isDown) {
         // TODO Not store destination here.
-        player.moveToXY(layer.getTileX(game.input.activePointer.x), layer.getTileX(game.input.activePointer.y));
+        player.moveToXY(layer.getTileX(game.input.activePointer.x+game.camera.x), layer.getTileX(game.input.activePointer.y+game.camera.y));
 
         // game.physics.arcade.moveToXY(player, player.dest[0], player.dest[1], 200);
         // console.log(tilemap);
