@@ -92,6 +92,7 @@ function create() {
     sprite.animations.add('right', [5, 6, 7, 8], 10, true);
     sprite.frame = 4;
     player = new Player(sprite);
+    game.camera.follow(player.sprite);
 }
 
 function update() {
