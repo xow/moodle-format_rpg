@@ -49,7 +49,8 @@ var maps = {
 var game = new Phaser.Game(TILESX * TILESW, TILESY * TILESH, Phaser.AUTO, 'container', {
     preload: preload,
     create: create,
-    update: update
+    update: update,
+    render: render
 });
 
 var player,
@@ -87,6 +88,7 @@ function create() {
 
     sprite = game.add.sprite(32, game.world.height - 150, 'dude');
     game.physics.arcade.enable(sprite);
+    sprite.anchor.set(0.5, 0.5);
     sprite.body.collideWorldBounds = true;
     sprite.animations.add('left', [0, 1, 2, 3], 10, true);
     sprite.animations.add('right', [5, 6, 7, 8], 10, true);
@@ -135,7 +137,17 @@ function update() {
 
     if (game.input.activePointer.isDown) {
         // TODO Not store destination here.
-        player.moveToXY(layer.getTileX(game.input.activePointer.x+game.camera.x), layer.getTileX(game.input.activePointer.y+game.camera.y));
+        var clear = true;
+        for (i = 0; i < npcs.length; i++) {
+            if (npcs[0].sprite.body.hitTest(game.input.activePointer.x, game.input.activePointer.y)) {
+                clear = false;
+                break;
+            }
+        }
+
+        if (clear) {
+            player.moveToXY(layer.getTileX(game.input.activePointer.x+game.camera.x), layer.getTileX(game.input.activePointer.y+game.camera.y));
+        }
 
         // game.physics.arcade.moveToXY(player, player.dest[0], player.dest[1], 200);
         // console.log(tilemap);
@@ -147,8 +159,12 @@ function update() {
     game.physics.arcade.overlap(player.sprite, warps, warpOverlap, null, this);
     player.update();
     for (i = 0; i < npcs.length; i++) {
+        game.physics.arcade.collide(npcs[i].sprite, player.sprite);
         npcs[i].update();
     }
+}
+
+function render() {
 }
 
 function warpOverlap(player, warp) {
@@ -250,13 +266,40 @@ function NPC(infos) {
     sprite.animations.add('left', [0, 1], 10, true);
     sprite.animations.add('right', [2, 3], 10, true);
     sprite.frame = 1;
+    sprite.body.immovable = true;
+    sprite.anchor.set(0.5, 0.5);
 
     this.infos = infos;
     this.jumpToXY(infos.x, infos.y);
     sprite.revive();
+
+    sprite.inputEnabled = true;
+    sprite.events.onInputUp.add(this.interact, this);
+    this.text = null;
 }
 NPC.prototype = Object.create(Character.prototype);
 NPC.prototype.constructor = NPC;
+NPC.prototype.interact = function() {
+    var str = 'Woof!',
+        x,
+        y;
+
+    if (this.text) {
+        this.text.destroy();
+    }
+
+    x = this.sprite.x;
+    y = this.sprite.y - 10;
+    this.text = game.add.text(x, y, str, {
+        wordWrap: true,
+        wordWrapWidth: 200,
+        strokeThickness: 2,
+        fontSize: 12,
+        fill: '#ffffff'
+    });
+    this.text.anchor.set(0.5, 1);
+    this.text.lifespan = 1000;
+};
 NPC.prototype.stop = function() {
     Character.prototype.stop.apply(this, arguments);
     this.sprite.frame = 1;
