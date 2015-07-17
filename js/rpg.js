@@ -5,52 +5,6 @@ var TILESX = 20,
 
 var walkables = [183, 181, 178];
 
-var maps = {
-    0: {
-        id: 0,
-        bg: '#454645',
-        warps: [
-            {
-                to: 1,
-                x: 10,
-                y: 10
-            }
-        ],
-        npcs: [
-            {
-                type: 'dog',
-                x: 18,
-                y: 18
-            }
-        ],
-        layer: 'world1layer1'
-    },
-    1: {
-        id: 1,
-        bg: '#ff9900',
-        warps: [
-            {
-                to: 2,
-                x: 200,
-                y: 200
-            }
-        ],
-        layer: 'world2layer1'
-    },
-    2: {
-        id: 2,
-        bg: '#ffff00',
-        warps: [
-            {
-                to: 0,
-                x: 400,
-                y: 400
-            }
-        ],
-        layer: 'world3layer1'
-    }
-};
-
 var game = new Phaser.Game(TILESX * TILESW, TILESY * TILESH, Phaser.AUTO, 'container', {
     preload: preload,
     create: create,
@@ -59,7 +13,7 @@ var game = new Phaser.Game(TILESX * TILESW, TILESY * TILESH, Phaser.AUTO, 'conta
 });
 
 var player,
-    map = maps[0],
+    mapName = 'world1layer1',
     currentMap,
     tilemap,
     layer,
@@ -106,12 +60,14 @@ function create() {
 
 function update() {
     var i;
-    if (currentMap != map) {
+    if (currentMap != mapName) {
+        // We're teleporting. Change what layer is displayed
         game.world.remove(layer);
-        layer = tilemap.createLayer(map.layer);
+        layer = tilemap.createLayer(mapName);
         layer.resizeWorld();
         game.world.sendToBack(layer);
         tilemap.setCollisionByExclusion(walkables, true, layer);
+        layerProperties = layer.layer.properties;
 
         // TODO Destroy all the elements from the previous map, memory leaks!!
         for (i = 0; i < npcs.length; i++) {
@@ -129,11 +85,11 @@ function update() {
 
         for (i = 0; i < 4; i++) {
             var warp = warps.getAt(i),
-                infos = map.warps[i];
+                infos = layerProperties.warps[i];
 
             if (infos) {
-                warp.x = infos.x;
-                warp.y = infos.y;
+                warp.x = infos.x * TILESW;
+                warp.y = infos.y * TILESH;
                 // TODO Store the information somewhere else than in the sprite.
                 warp.to = infos.to;
                 warp.revive();
@@ -143,13 +99,13 @@ function update() {
         }
 
         npcs = [];
-        if (map.npcs) {
-            for (i = 0; i < map.npcs.length; i++) {
-                npcs.push(new NPC(map.npcs[i]));
+        if (layerProperties.npcs) {
+            for (i = 0; i < layerProperties.npcs.length; i++) {
+                npcs.push(new NPC(layerProperties.npcs[i]));
             }
         }
 
-        currentMap = map;
+        currentMap = mapName;
         return;
     }
 
@@ -188,7 +144,7 @@ function render() {
 }
 
 function warpOverlap(player, warp) {
-    map = maps[warp.to];
+    mapName = warp.to;
 }
 
 function Character(sprite) {
