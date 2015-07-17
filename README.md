@@ -5,4 +5,5 @@ A course format for moodle that will turn your oridinary, boring course into an 
 # Attributions
 
 * World: See assets/tilemaps/maps/Attribution.txt
+* Character: pennomi, laetissima and makrohn
 * Goblin: Stephen "Redshrike" Challener graphic artist and William.Thompsonj contributor

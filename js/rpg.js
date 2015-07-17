@@ -21,7 +21,7 @@ var player,
     npcs = [];
 
 function preload() {
-    game.load.spritesheet('dude', 'format/rpg/assets/dude.png', 32, 48);
+    game.load.spritesheet('you', 'format/rpg/assets/female_spritesheet.png', 64, 64);
     game.load.spritesheet('warp', 'format/rpg/assets/diamond.png', 32, 28);
     game.load.spritesheet('Dog', 'format/rpg/assets/baddie.png', 32, 32);
     game.load.spritesheet('Goblin', 'format/rpg/assets/goblinsword_0.png', 64, 64);
@@ -43,13 +43,16 @@ function create() {
         warp.kill();
     }
 
-    sprite = game.add.sprite(128, 128, 'dude');
+    sprite = game.add.sprite(128, 128, 'you');
     game.physics.arcade.enable(sprite);
     sprite.anchor.set(0.5, 0.5);
     sprite.body.collideWorldBounds = true;
-    sprite.animations.add('left', [0, 1, 2, 3], 10, true);
-    sprite.animations.add('right', [5, 6, 7, 8], 10, true);
-    sprite.frame = 4;
+    sprite.animations.add('up', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 20, true);
+    sprite.animations.add('left', [9, 10, 11, 12, 13, 14, 15, 16, 17], 20, true);
+    sprite.animations.add('right', [27, 28, 29, 30, 31, 32, 33, 34, 35], 20, true);
+    sprite.animations.add('down', [18, 19, 20, 21, 22, 23, 24, 25, 26], 20, true);
+    sprite.animations.add('idle', [54], 10, true);
+    sprite.animations.play('idle');
     player = new Player(sprite);
     game.camera.follow(player.sprite);
 
@@ -197,19 +200,28 @@ Character.prototype.update = function() {
         if (this.angle >= 0 && this.angle < Math.PI/2) {
             // Going bottom right.
             stopCondition = x >= destX && y >= destY;
-            this.sprite.animations.play('right');
         } else if (this.angle >= Math.PI/2) {
             // Going bottom left.
             stopCondition = x <= destX && y >= destY;
-            this.sprite.animations.play('left');
         } else if (this.angle >= -Math.PI && this.angle < -Math.PI/2) {
             // Going top left.
             stopCondition = x <= destX && y <= destY;
-            this.sprite.animations.play('left');
         } else {
             // Going top right.
             stopCondition = x >= destX && y <= destY;
-            this.sprite.animations.play('right');
+        }
+        if (Math.abs(this.sprite.body.velocity.x) > Math.abs(this.sprite.body.velocity.y)) {
+            if (this.sprite.body.velocity.x > 0) {
+                this.sprite.animations.play('right');
+            } else {
+                this.sprite.animations.play('left');
+            }
+        } else {
+            if (this.sprite.body.velocity.y > 0) {
+                this.sprite.animations.play('down');
+            } else {
+                this.sprite.animations.play('up');
+            }
         }
 
         if (stopCondition) {
@@ -230,7 +242,7 @@ Player.prototype = Object.create(Character.prototype);
 Player.prototype.constructor = Player;
 Player.prototype.stop = function() {
     Character.prototype.stop.apply(this, arguments);
-    this.sprite.frame = 4;
+    this.sprite.animations.play('idle');
 };
 
 function NPC(infos) {
