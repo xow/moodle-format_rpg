@@ -9,9 +9,26 @@
             {
                 "npcs": [
                     {
-                        "type": "dog",
+                        "type": "Dog",
                         "x": 13,
-                        "y": 5
+                        "y": 5,
+                        "speech": "Woof! Please save me from the goblins!"
+                    },
+                    {
+                        "type": "Goblin",
+                        "x": 9,
+                        "y": 7,
+                        "walkx": 1,
+                        "walky": 7,
+                        "speech": "What is the square root of 2*2 ?"
+                    },
+                    {
+                        "type": "Goblin",
+                        "x": 7,
+                        "y": 10,
+                        "walkx": 1,
+                        "walky": 10,
+                        "speech": "Grr! You haven't been studying!"
                     }
                 ],
                 "id": 0,

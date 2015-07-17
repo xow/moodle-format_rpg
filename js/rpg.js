@@ -23,7 +23,8 @@ var player,
 function preload() {
     game.load.spritesheet('dude', 'format/rpg/assets/dude.png', 32, 48);
     game.load.spritesheet('warp', 'format/rpg/assets/diamond.png', 32, 28);
-    game.load.spritesheet('dog', 'format/rpg/assets/baddie.png', 32, 32);
+    game.load.spritesheet('Dog', 'format/rpg/assets/baddie.png', 32, 32);
+    game.load.spritesheet('Goblin', 'format/rpg/assets/goblinsword_0.png', 64, 64);
     game.load.tilemap('map1', 'format/rpg/assets/tilemaps/maps/map1.json', null, Phaser.Tilemap.TILED_JSON);
     game.load.image('terrain_atlas_image', 'format/rpg/assets/tilemaps/maps/terrain_atlas.png');
 }
@@ -101,7 +102,8 @@ function update() {
         npcs = [];
         if (layerProperties.npcs) {
             for (i = 0; i < layerProperties.npcs.length; i++) {
-                npcs.push(new NPC(layerProperties.npcs[i]));
+                var s = layerProperties.npcs[i].type;
+                npcs.push(new window[s](layerProperties.npcs[i]));
             }
         }
 
@@ -256,8 +258,14 @@ function NPC(infos) {
 NPC.prototype = Object.create(Character.prototype);
 NPC.prototype.constructor = NPC;
 NPC.prototype.interact = function() {
-    var str = 'Woof!',
-        x,
+    if (this.infos.speech) {
+        this.say(this.infos.speech);
+    } else {
+        this.say('*poke*');
+    }
+};
+NPC.prototype.say = function(str) {
+    var x,
         y;
 
     if (this.text) {
@@ -282,12 +290,29 @@ NPC.prototype.stop = function() {
 };
 NPC.prototype.update = function() {
     Character.prototype.update.apply(this, arguments);
-    // Disabling this feature for now.
-    // if (!this.isMoving()) {
-    //     if (this.x == 1) {
-    //         this.moveToXY(this.infos.x, this.infos.y);
-    //     } else {
-    //         this.moveToXY(1, this.infos.y);
-    //     }
-    // }
+};
+
+function Dog(infos) {
+    NPC.apply(this, [infos]);
+}
+Dog.prototype = Object.create(NPC.prototype);
+
+function Goblin(infos) {
+    NPC.apply(this, [infos]);
+    this.sprite.animations.add('left', [38, 37, 36, 35, 34, 33], 10, true);
+    this.sprite.animations.add('right', [11, 12, 13, 14, 15, 16], 10, true);
+    this.sprite.frame = 1;
+    this.sprite.body.immovable = true;
+}
+Goblin.prototype = Object.create(NPC.prototype);
+Goblin.prototype.constructor = NPC;
+Goblin.prototype.update = function() {
+    NPC.prototype.update.apply(this, arguments);
+    if (!this.isMoving()) {
+        if (this.x == 1) {
+            this.moveToXY(this.infos.x, this.infos.y);
+        } else {
+            this.moveToXY(this.infos.walkx, this.infos.walky);
+        }
+    }
 };
