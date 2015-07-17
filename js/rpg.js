@@ -71,7 +71,7 @@ function preload() {
     game.load.spritesheet('warp', 'format/rpg/assets/diamond.png', 32, 28);
     game.load.spritesheet('dog', 'format/rpg/assets/baddie.png', 32, 32);
     game.load.tilemap('map1', 'format/rpg/assets/tilemaps/maps/map1.json', null, Phaser.Tilemap.TILED_JSON);
-    game.load.image('terrain_atlas_image', 'format/rpg/assets/terrain_atlas.png');
+    game.load.image('terrain_atlas_image', 'format/rpg/assets/tilemaps/maps/terrain_atlas.png');
 }
 
 function create() {
