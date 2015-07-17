@@ -3,6 +3,8 @@ var TILESX = 20,
     TILESW = 32,
     TILESH = 32;
 
+var walkables = [183, 181, 178];
+
 var maps = {
     0: {
         id: 0,
@@ -109,7 +111,7 @@ function update() {
         layer = tilemap.createLayer(map.layer);
         layer.resizeWorld();
         game.world.sendToBack(layer);
-        tilemap.setCollisionByExclusion([183, 181], true, layer);
+        tilemap.setCollisionByExclusion(walkables, true, layer);
 
         // TODO Destroy all the elements from the previous map, memory leaks!!
         for (i = 0; i < npcs.length; i++) {
